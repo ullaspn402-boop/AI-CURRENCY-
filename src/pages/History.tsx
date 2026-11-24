@@ -114,6 +114,11 @@ export default function History() {
                           DEMO
                         </span>
                       )}
+                      {!record.isDemo && record.engineUsed === 'gemini-vision' && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          GEMINI AI
+                        </span>
+                      )}
                       {!record.isDemo && record.engineUsed === 'on-device' && (
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">
                           ON-DEVICE

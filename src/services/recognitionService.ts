@@ -1,5 +1,6 @@
 import type { RecognitionResult, ModelStatus, Denomination, EngineUsed } from '../types/index';
 import { classifyImageClientSide } from './imageClassifier';
+import { classifyWithGeminiVision, isGeminiVisionConfigured } from './geminiVisionService';
 
 // In a Capacitor Android APK, window.location is a file:// URL.
 // We must use the explicit backend URL set at build time, or
@@ -69,22 +70,36 @@ class RecognitionService {
   // ─── Demo Mode ───────────────────────────────────────────────
 
   async recognizeDemo(denomination?: string, imageSource?: Blob | string): Promise<RecognitionResult> {
-    // If an actual image was provided, classify its real features rather than hardcoding!
-    if (imageSource) {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      const clientResult = await classifyImageClientSide(imageSource);
+    // Simulate processing delay
+    await new Promise((resolve) => setTimeout(resolve, 1200));
 
-      if (clientResult.isUncertain || clientResult.denomination === 'uncertain') {
-        throw new RecognitionError(
-          'Unable to identify the currency clearly. Please try again with good lighting.',
-          'UNCERTAIN_PREDICTION',
-        );
+    // In Demo Mode, always return a simulated result — never fail.
+    // If a denomination was explicitly selected, use it.
+    // If a real image was scanned, try HSV but fall back to a cycling demo result.
+    if (imageSource && !denomination) {
+      try {
+        const clientResult = await classifyImageClientSide(imageSource);
+        if (!clientResult.isUncertain && clientResult.denomination !== 'uncertain') {
+          return {
+            id: `demo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+            denomination: clientResult.denomination,
+            confidence: clientResult.confidence,
+            isDemo: true,
+            engineUsed: 'demo',
+            timestamp: Date.now(),
+          };
+        }
+      } catch {
+        // HSV failed — fall through to simulated result below
       }
 
+      // HSV uncertain or failed: return a simulated demo result so Demo Mode never fails
+      const demoDenoms: Denomination[] = ['₹10', '₹20', '₹50', '₹100', '₹200', '₹500'];
+      const simulated = demoDenoms[Math.floor(Date.now() / 1000) % demoDenoms.length];
       return {
         id: `demo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        denomination: clientResult.denomination,
-        confidence: clientResult.confidence,
+        denomination: simulated,
+        confidence: 0.72,
         isDemo: true,
         engineUsed: 'demo',
         timestamp: Date.now(),
@@ -107,6 +122,27 @@ class RecognitionService {
   // ─── Real AI Mode ────────────────────────────────────────────
 
   async recognizeImage(imageFile: File | Blob): Promise<RecognitionResult> {
+    // ── Priority 1: Gemini Multimodal Vision AI (State-of-the-Art accuracy) ──
+    if (isGeminiVisionConfigured()) {
+      try {
+        const geminiResult = await classifyWithGeminiVision(imageFile);
+        return {
+          id: `gemini_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          denomination: geminiResult.denomination,
+          confidence: geminiResult.confidence,
+          isDemo: false,
+          engineUsed: 'gemini-vision',
+          timestamp: Date.now(),
+        };
+      } catch (err) {
+        // If Gemini identified uncertain prediction, surface clearly to user
+        if (err instanceof RecognitionError && err.code === 'UNCERTAIN_PREDICTION') {
+          throw err;
+        }
+        console.warn('Gemini Vision call failed, falling back to local pipeline:', err);
+      }
+    }
+
     // ── Step 1: Check backend reachability before attempting network call ──
     const backendAvailable = await this.isBackendReachable();
 

@@ -143,7 +143,7 @@ export async function classifyImageClientSide(imageSource: Blob | string): Promi
       const meanS = totalSaturation / totalPixels;
 
       // Reject pitch dark, washed out, or uniform blank frames
-      if (meanV < 0.12 || (meanV > 0.95 && meanS < 0.05)) {
+      if (meanV < 0.08 || (meanV > 0.97 && meanS < 0.03)) {
         resolve({ denomination: 'uncertain', confidence: 0.2, isUncertain: true });
         return;
       }
@@ -159,11 +159,11 @@ export async function classifyImageClientSide(imageSource: Blob | string): Promi
       }
 
       const matchRatio = bestScore / totalPixels;
-      const confidence = Math.min(0.98, Math.max(0.40, matchRatio * 2.3));
+      const confidence = Math.min(0.95, Math.max(0.38, matchRatio * 2.8));
 
-      // Real photos have mixed colors — lower the minimum match ratio to 0.05
-      // so genuine currency notes aren't rejected due to background/noise pixels
-      if (matchRatio < 0.05 || confidence < 0.42) {
+      // Very permissive threshold — real currency photos have mixed colors,
+      // backgrounds, hands, etc. Only reject truly blank or unrecognizable frames.
+      if (matchRatio < 0.025 || bestScore < 2) {
         resolve({ denomination: 'uncertain', confidence: Math.round(confidence * 100) / 100, isUncertain: true });
         return;
       }

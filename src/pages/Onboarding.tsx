@@ -28,7 +28,7 @@ const steps: Step[] = [
     title: 'Banknote Recognition',
     subtitle: 'Point Rear Camera & Identify',
     description:
-      'Hold any Indian Rupee banknote flat about 15 centimeters below the phone camera. Drishti AI recognizes ₹10, ₹20, ₹50, ₹100, ₹200, and ₹500 denominations.',
+      'Hold your phone flat, about 15 to 20 centimetres above the banknote on a plain surface. Drishti AI recognizes ₹10, ₹20, ₹50, ₹100, ₹200, and ₹500 denominations.',
     icon: Camera,
     accentColor: 'from-teal-500 to-emerald-500',
   },

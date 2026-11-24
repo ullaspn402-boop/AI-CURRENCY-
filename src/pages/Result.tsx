@@ -111,6 +111,14 @@ export default function Result() {
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                 DEMO MODE
               </span>
+            ) : result.engineUsed === 'gemini-vision' ? (
+              <span
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                aria-label="Recognized using Gemini Vision AI"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
+                Gemini Vision AI
+              </span>
             ) : result.engineUsed === 'on-device' ? (
               <span
                 className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30"

@@ -27,7 +27,7 @@ export const DENOMINATION_VALUES: Record<Denomination, number> = {
 };
 
 /** Which inference engine produced this result */
-export type EngineUsed = 'ai-backend' | 'on-device' | 'demo';
+export type EngineUsed = 'ai-backend' | 'on-device' | 'demo' | 'gemini-vision';
 
 /** Result of a currency recognition attempt */
 export interface RecognitionResult {
@@ -59,6 +59,8 @@ export interface AppSettings {
   hapticFeedback: boolean;
   /** Font/text size scale: 0.85 = Small, 1.0 = Normal, 1.15 = Large, 1.3 = Extra Large */
   fontSize: number;
+  /** Optional Google Gemini API key for real-time cloud vision inference */
+  geminiApiKey?: string;
 }
 
 /** Default application settings */
@@ -71,6 +73,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   largeText: false,
   hapticFeedback: true,
   fontSize: 1.0,
+  geminiApiKey: '',
 };
 
 /** A history record extends the recognition result */

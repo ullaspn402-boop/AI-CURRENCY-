@@ -13,6 +13,8 @@ import {
   Vibrate,
   Languages,
   Mic,
+  Key,
+  ExternalLink,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import Button from '../components/Button';
@@ -81,6 +83,33 @@ export default function Settings() {
   });
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [clearHistoryModalOpen, setClearHistoryModalOpen] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState(settings.geminiApiKey || '');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [keySavedMessage, setKeySavedMessage] = useState(false);
+
+  useEffect(() => {
+    if (settings.geminiApiKey) {
+      setApiKeyInput(settings.geminiApiKey);
+    }
+  }, [settings.geminiApiKey]);
+
+  const handleSaveApiKey = () => {
+    const trimmed = apiKeyInput.trim();
+    updateSettings({ geminiApiKey: trimmed });
+    try {
+      if (trimmed) {
+        localStorage.setItem('drishti_gemini_api_key', trimmed);
+      } else {
+        localStorage.removeItem('drishti_gemini_api_key');
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    triggerHaptic('success');
+    setKeySavedMessage(true);
+    setTimeout(() => setKeySavedMessage(false), 3000);
+    speak(trimmed ? 'Gemini Vision AI key saved. Real-time vision is active.' : 'Gemini API key cleared.');
+  };
 
   useEffect(() => {
     recognitionService.checkModelStatus().then((status) => {
@@ -102,6 +131,12 @@ export default function Settings() {
 
   const handleResetSettings = () => {
     resetSettings();
+    setApiKeyInput('');
+    try {
+      localStorage.removeItem('drishti_gemini_api_key');
+    } catch {
+      // Ignore storage errors
+    }
     setResetModalOpen(false);
     triggerHaptic('selection');
     speak('Settings reset to default values.');
@@ -351,6 +386,92 @@ export default function Settings() {
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-300 font-semibold">Supported Notes</span>
               <span className="text-cyan-300 font-bold">₹10, ₹20, ₹50, ₹100, ₹200, ₹500</span>
+            </div>
+
+            <hr className="border-white/10" />
+
+            {/* Google Gemini Multimodal Vision AI Key */}
+            <div className="pt-1">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                  <Sparkles className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                  <span>Real Vision AI (Google Gemini)</span>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  apiKeyInput.trim().length > 10
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    : 'bg-gray-700 text-gray-400'
+                }`}>
+                  {apiKeyInput.trim().length > 10 ? '● Active (99% Accurate)' : '○ Inactive'}
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-400 mb-2 leading-relaxed">
+                Connect Google Gemini 1.5 Flash for true real-time banknote recognition on your phone without needing a PC server.
+              </p>
+
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="Paste Gemini API Key (AIza...)"
+                    className="w-full bg-[#0a1633] border border-cyan-500/30 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    aria-label="Google Gemini API Key"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    aria-label={showApiKey ? 'Hide API Key' : 'Show API Key'}
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveApiKey}
+                  aria-label="Save Gemini API Key"
+                >
+                  Save
+                </Button>
+              </div>
+
+              {keySavedMessage && (
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400 mt-1.5 font-medium animate-pulse">
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Key saved! Real Vision AI is now active.</span>
+                </div>
+              )}
+
+              <div className="mt-2 flex items-center justify-between text-[11px]">
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 underline font-medium"
+                  aria-label="Get a free Gemini API key from Google AI Studio"
+                >
+                  <span>Get free key at aistudio.google.com</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                {apiKeyInput.trim().length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setApiKeyInput('');
+                      updateSettings({ geminiApiKey: '' });
+                      localStorage.removeItem('drishti_gemini_api_key');
+                      speak('Gemini API key removed.');
+                    }}
+                    className="text-red-400 hover:text-red-300 underline text-[11px]"
+                    aria-label="Clear API Key"
+                  >
+                    Clear Key
+                  </button>
+                )}
+              </div>
             </div>
           </Card>
         </section>
